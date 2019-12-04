@@ -57,6 +57,10 @@ The following imports are included automatically and are ready for the user code
       import org.apache.spark.SparkContext._
       import scala.collection.JavaConversions._
 
+**dependencies** Extra dependencies for the Spark program.
+It is a ',' separated list of URI for the location of dependency jars.
+A path can be ended with an asterisk '*' as a wildcard, in which all files with extension '.jar' under the
+parent path will be included.
 
 **schema** The schema of output objects. If no schema is given, it is assumed that the output
 schema is the same as the input schema.
