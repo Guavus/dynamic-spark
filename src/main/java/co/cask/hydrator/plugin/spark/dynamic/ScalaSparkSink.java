@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link SparkSink} that takes any scala code and executes it.
  */
-@Plugin(type = SparkSink.PLUGIN_TYPE)
+//@Plugin(type = SparkSink.PLUGIN_TYPE)
 @Name("ScalaSparkSink")
 @Description("Executes user-provided Spark code written in Scala that performs RDD operations")
 public class ScalaSparkSink extends SparkSink<StructuredRecord> {
