@@ -2,28 +2,25 @@
 
 Description
 -----------
-Executes user-provided Spark code in Scala that transforms RDD to RDD with full
-access to all Spark features.
+Spark Computation in Scala is a Guavus Enterprise Accelerator that executes the user-provided Spark code in Scala, which is responsible for applying a logic on the incoming RDD and output a transformed RDD, with full access to all Spark features.
 
 Use Case
 --------
-This plugin can be used when you want to have complete control on the Spark computation.
-For example, you may want to join the input RDD with another Dataset and select a subset
-of the join result using Spark SQL.
+Consider a scenario wherein you want to have complete control over the Spark computation. For example, you may want to join the input RDD with another dataset and then select a subset of the join result using Spark SQL. This can be achieved by configuring the accelerator as explained in the following section.
 
 Properties
 ----------
 **scalaCode** Spark code in Scala defining how to transform RDD to RDD. 
-The code must implement a function called ``transform``, whose signature should be one of:
+The code must implement a function called ``transform`` whose signature should be one of:
 
     def transform(df: DataFrame) : DataFrame
 
     def transform(df: DataFrame, context: SparkExecutionPluginContext) : DataFrame
     
-The input ``DataFrame`` has the same schema as the input schema to this stage and the ``transform`` method
-should return a ``DataFrame`` that has the same schema as the output schema setup for this stage.
+The input ``DataFrame`` has the same schema as the input schema to this stage, and the ``transform`` method
+should return a ``DataFrame`` that has the same schema as the output schema set up for this stage.
 Using the ``SparkExecutionPluginContext``, you can access CDAP
-entities such as Stream and Dataset, as well as providing access to the underlying ``SparkContext`` in use.
+entities such as Stream and Dataset as well as provide access to the underlying ``SparkContext`` in use.
  
 Operating on lower level ``RDD`` is also possible by using the one of the following forms of the ``transform`` method:
 
@@ -42,8 +39,7 @@ For example:
         .map(t => StructuredRecord.builder(outputSchema).set("word", t._1).set("count", t._2).build)
     }
         
-The will perform a word count on the input field ``'body'``, 
-and produces records of two fields, ``'word'`` and ``'count'``.
+This will perform a word count on the input field ``'body'`` and produce records of two fields, ``'word'`` and ``'count'``.
 
 The following imports are included automatically and are ready for the user code to use:
 
