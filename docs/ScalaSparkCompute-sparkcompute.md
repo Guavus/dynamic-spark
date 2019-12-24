@@ -6,7 +6,7 @@ Spark Computation in Scala is a Guavus Enterprise Accelerator that executes the 
 
 Use Case
 --------
-Consider a scenario wherein you want to have complete control over the Spark computation. For example, you may want to join the input RDD with another dataset and then select a subset of the join result using Spark SQL. This can be achieved by configuring the accelerator as explained in the following section.
+Consider a scenario wherein you want to have a Spark IDE where you can write custom Spark code with complete control over the Spark library. For example, you may want to join the input RDD with another dataset and then select a subset of the join result using Spark SQL. This can be achieved by configuring the accelerator as explained in the following section.
 
 Properties
 ----------
@@ -41,7 +41,7 @@ For example:
         
 This will perform a word count on the input field ``'body'`` and produce records of two fields, ``'word'`` and ``'count'``.
 
-The following imports are included automatically and are ready for the user code to use:
+The following imports are included automatically and are ready to use:
 
       import co.cask.cdap.api.data.format._
       import co.cask.cdap.api.data.schema._;
