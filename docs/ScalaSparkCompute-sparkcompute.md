@@ -10,7 +10,7 @@ Consider a scenario wherein you want to have a Spark IDE where you can write cus
 
 Properties
 ----------
-**scalaCode** Spark code in Scala defining how to transform RDD to RDD. 
+**scalaCode:** The Spark code in Scala defining how to transform RDD to RDD. 
 The code must implement a function called ``transform`` whose signature should be one of:
 
     def transform(df: DataFrame) : DataFrame
@@ -19,10 +19,10 @@ The code must implement a function called ``transform`` whose signature should b
     
 The input ``DataFrame`` has the same schema as the input schema to this stage, and the ``transform`` method
 should return a ``DataFrame`` that has the same schema as the output schema set up for this stage.
-Using the ``SparkExecutionPluginContext``, you can access CDAP
-entities such as Stream and Dataset as well as provide access to the underlying ``SparkContext`` in use.
+Using ``SparkExecutionPluginContext``, you can access CDAP
+entities such as Stream and Dataset as it provides access to the underlying ``SparkContext`` in use.
  
-Operating on lower level ``RDD`` is also possible by using the one of the following forms of the ``transform`` method:
+Operating on the lower level ``RDD`` is also possible by using one of the following forms of the ``transform`` method:
 
     def transform(rdd: RDD[StructuredRecord]) : RDD[StructuredRecord]
 
@@ -41,7 +41,7 @@ For example:
         
 This will perform a word count on the input field ``'body'`` and produce records of two fields, ``'word'`` and ``'count'``.
 
-The following imports are included automatically and are ready to use:
+The following imports are included automatically and are ready to be used:
 
       import co.cask.cdap.api.data.format._
       import co.cask.cdap.api.data.schema._;
