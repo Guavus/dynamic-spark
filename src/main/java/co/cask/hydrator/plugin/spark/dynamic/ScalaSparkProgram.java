@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 /**
  * A Spark program that executes user Spark code written in scala.
  */
-//@Plugin(type = "sparkprogram")
+@Plugin(type = "sparkprogram")
 @Name("ScalaSparkProgram")
 @Description("Executes user-provided Spark program")
 public class ScalaSparkProgram implements JavaSparkMain {
