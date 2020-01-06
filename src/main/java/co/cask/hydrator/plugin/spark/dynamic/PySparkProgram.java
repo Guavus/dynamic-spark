@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link Spark} program plugin for running PySpark script.
  */
-//@Plugin(type = "sparkprogram")
+@Plugin(type = "sparkprogram")
 @Name("PySparkProgram")
 @Description("Executes user-provided PySpark program")
 public final class PySparkProgram extends AbstractSpark {
