@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.hydrator.plugin.spark.dynamic;
+package co.cask.hydrator.plugin.spark.dynamic.dataframe;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
@@ -22,18 +22,23 @@ import co.cask.cdap.api.spark.dynamic.CompilationFailureException;
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.api.spark.sql.DataFrames;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
+import co.cask.hydrator.plugin.spark.dynamic.RecordToRow;
+import co.cask.hydrator.plugin.spark.dynamic.ScalaSparkSink;
+import co.cask.hydrator.plugin.spark.dynamic.SparkCompilers;
 import org.apache.spark.SparkContext;
 import org.apache.spark.SparkFirehoseListener;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.scheduler.SparkListenerApplicationEnd;
 import org.apache.spark.scheduler.SparkListenerEvent;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,19 +48,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import javax.annotation.Nullable;
 
 /**
  * Compiles and executes scala spark code that takes an RDD or Dataframe as input.
  */
-public class ScalaSparkCodeExecutor {
+public class ScalaSparkDataframeCodeExecutor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ScalaSparkCodeExecutor.class);
-  private static final String CLASS_NAME_PREFIX = "co.cask.hydrator.plugin.spark.dynamic.generated.UserScalaSpark$";
+  private static final Logger LOG = LoggerFactory.getLogger(ScalaSparkDataframeCodeExecutor.class);
+  private static final String CLASS_NAME_PREFIX = "co.cask.hydrator.plugin.spark.dynamic.dataframe.generated.UserScalaSpark$";
   private static final Class<?> DATAFRAME_TYPE = getDataFrameType();
   private static final Class<?>[][] ACCEPTABLE_PARAMETER_TYPES = new Class<?>[][] {
-    { RDD.class, SparkExecutionPluginContext.class },
-    { RDD.class },
+    { Dataset.class, SparkExecutionPluginContext.class },
+    { Dataset.class },
     { DATAFRAME_TYPE, SparkExecutionPluginContext.class},
     { DATAFRAME_TYPE }
   };
@@ -73,7 +77,8 @@ public class ScalaSparkCodeExecutor {
   private transient boolean isDataFrame;
   private transient boolean takeContext;
 
-  public ScalaSparkCodeExecutor(String code, @Nullable String dependencies, String methodName, boolean isVoid) {
+  public ScalaSparkDataframeCodeExecutor(String code, @Nullable String dependencies, String methodName, boolean isVoid) {
+    LOG.debug("code :: " + code);
     this.code = code;
     this.dependencies = dependencies;
     this.methodName = methodName;
@@ -172,16 +177,16 @@ public class ScalaSparkCodeExecutor {
   /**
    * Execute interpreted code on the given RDD.
    */
-  public Object execute(SparkExecutionPluginContext context,
-                        JavaRDD<StructuredRecord> javaRDD) throws InvocationTargetException, IllegalAccessException {
+  public Dataset execute(SparkExecutionPluginContext context,
+                        Dataset input) throws InvocationTargetException, IllegalAccessException {
     // RDD case
-    if (!isDataFrame) {
-      if (takeContext) {
-        return method.invoke(null, javaRDD.rdd(), context);
-      } else {
-        return method.invoke(null, javaRDD.rdd());
-      }
-    }
+//    if (!isDataFrame) {
+//      if (takeContext) {
+//        return method.invoke(null, input, context);
+//      } else {
+//        return method.invoke(null, input.rdd());
+//      }
+//    }
 
     // DataFrame case
     Schema inputSchema = context.getInputSchema();
@@ -190,13 +195,19 @@ public class ScalaSparkCodeExecutor {
       throw new IllegalArgumentException("Input schema must be provided for using DataFrame in Spark Compute");
     }
 
-    SQLContext sqlContext = getSQLContext(context.getSparkContext());
+//    SQLContext sqlContext = getSQLContext(context.getSparkSession().sqlContext());
+//
+//    StructType rowType = DataFrames.toDataType(inputSchema);
+//    JavaRDD<Row> rowRDD = javaRDD.map(new RecordToRow(rowType));
+//
+//    Object dataFrame = createDataFrame(sqlContext, rowRDD, rowType);
 
-    StructType rowType = DataFrames.toDataType(inputSchema);
-    JavaRDD<Row> rowRDD = javaRDD.map(new RecordToRow(rowType));
+    if(takeContext){
+      return (Dataset) method.invoke(null, input, context);
+    }else{
+      return (Dataset) method.invoke(null, input);
+    }
 
-    Object dataFrame = createDataFrame(sqlContext, rowRDD, rowType);
-    return takeContext ? method.invoke(null, dataFrame, context) : method.invoke(null, dataFrame);
   }
 
   private String generateSourceClass(String className) {
@@ -270,17 +281,15 @@ public class ScalaSparkCodeExecutor {
         }
       }
 
-      String returnType1 = isVoid ? "Unit" : "RDD[StructuredRecord]";
-      String returnType2 = isVoid ? "Unit" : "DataFrame[StructuredRecord]";
+//      String returnType1 = isVoid ? "Unit" : "RDD[StructuredRecord]";
+//      String returnType2 = isVoid ? "Unit" : "DataFrame[StructuredRecord]";
+      String returnType3 = isVoid ? "Unit" : "Dataset[Row]";
       if (method == null) {
         throw new IllegalArgumentException(String.format(
           "Missing a `%s` method that has signature in one of the following form\n" +
-            "def %s(rdd: RDD[StructuredRecord]) : %s\n" +
-            "def %s(rdd: RDD[StructuredRecord], context: SparkExecutionPluginContext) : %s\n" +
-            "def %s(dataframe: DataFrame) : %s\n" +
-            "def %s(dataframe: DataFrame, context: SparkExecutionPluginContext) : %s",
-          methodName, methodName, returnType1, methodName, returnType1, methodName, returnType2,
-          methodName, returnType2));
+            "def %s(dataset: Dataset) : %s\n" +
+            "def %s(dataset: Dataset, context: SparkExecutionPluginContext) : %s",
+          methodName, methodName, returnType3, methodName, returnType3));
       }
 
       Type[] parameterTypes = method.getGenericParameterTypes();
@@ -380,18 +389,11 @@ public class ScalaSparkCodeExecutor {
 
   @Nullable
   private static Class<?> getDataFrameType() {
-    // For Spark1, it has the DataFrame class
-    // For Spark2, there is no more DataFrame class, and it becomes Dataset<Row>
     try {
-      return ScalaSparkSink.class.getClassLoader().loadClass("org.apache.spark.sql.DataFrame");
+      return ScalaSparkSink.class.getClassLoader().loadClass("org.apache.spark.sql.Dataset");
     } catch (ClassNotFoundException e) {
-      try {
-        return ScalaSparkSink.class.getClassLoader().loadClass("org.apache.spark.sql.Dataset");
-      } catch (ClassNotFoundException e1) {
-        LOG.warn("Failed to determine the type of Spark DataFrame. " +
-                   "DataFrame is not supported in the ScalaSparkCompute plugin.");
-        return null;
-      }
+      LOG.error("ClassNotFound `org.apache.spark.sql.Dataset` ");
+      return null;
     }
   }
 }
