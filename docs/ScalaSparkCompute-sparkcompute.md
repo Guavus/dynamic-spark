@@ -1,8 +1,8 @@
-# Spark Computation in Scala
+# Spark (Spark Scala)
 
 Description
 -----------
-Spark Computation in Scala is a Guavus Enterprise Accelerator that executes the user-provided Spark code in Scala, which is responsible for applying a logic on the incoming RDD and output a transformed RDD, with full access to all Spark features.
+Spark Compute Program IDE executes the user-provided Spark code in Scala, which is responsible for applying a logic on the incoming RDD and output a transformed RDD, with full access to all Spark features.
 
 Use Case
 --------
